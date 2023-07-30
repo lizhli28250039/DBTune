@@ -14,7 +14,7 @@ torch.cuda.manual_seed(1234)
 torch.cuda.manual_seed_all(1234)
 
 n_states = 64  #The sum of the quantities of , , and  dimensions
-sample_filter_data_path = "sample_filter_data_path"
+sample_filter_data_path = "sample_filter_data_path4"
 
 class SampleFilter(nn.Module):
     def __init__(self):
@@ -44,7 +44,7 @@ class SampleFilter(nn.Module):
         if line != 0:
             self.gline = line
 
-        print("gline ", self.gline)
+        #print("gline ", self.gline)
 
         if self.gline == 1:
             with open(sample_filter_data_path, 'r') as file:
@@ -87,7 +87,7 @@ class SampleFilter(nn.Module):
 
     def trainnn(self):
         device = self.device  # 在跑深度学习的时候最好使用GPU，这样速度会很快。不要的话默认用cpu跑
-        epochs = 100  # 这是迭代次数，把所有的训练数据输入到网络里去就叫完成了一次epoch。
+        epochs = 10000  # 这是迭代次数，把所有的训练数据输入到网络里去就叫完成了一次epoch。
         learningrate = 1e-4  # 学习率，相当于优化算法里的步长，学习率越大，网络参数更新地更加激进。学习率越小，网络学习地更加稳定。
         net = SampleFilter().to(device=device)  # 网络的初始化
         optimizer = torch.optim.Adam(net.parameters(),
@@ -103,8 +103,8 @@ class SampleFilter(nn.Module):
 
             x_state, y_label = self.getdata(line=0)
 
-            print("x_state:", x_state)
-            print("y_label:", y_label)
+            #print("x_state:", x_state)
+            #print("y_label:", y_label)
 
 
             pt_x_train = torch.from_numpy(np.array(x_state)).to(device=device, dtype=torch.float32).reshape(1,-1)  # 这里需要把我们的训练数据转换为pytorch tensor的类型，并且把它变成gpu能运算的形式。
@@ -132,7 +132,7 @@ class SampleFilter(nn.Module):
     def makedata(self):
         open(sample_filter_data_path, 'w')
         with open(sample_filter_data_path, 'a')as file:
-            for i in range(1000):
+            for i in range(100000):
                 state = [round(random.uniform(0, 1), 3) for _ in range(64)]
                 random_list = [0,1]
                 random_element = random.choice(random_list)
@@ -197,9 +197,9 @@ class SampleFilter(nn.Module):
 
 if __name__ == '__main__':
     samplefileter = SampleFilter()
-    #samplefileter.makedata()
+    samplefileter.makedata()
     #samplefileter.getdata()
-    #samplefileter.trainnn()
+    samplefileter.trainnn()
     samplefileter.test()
 
 

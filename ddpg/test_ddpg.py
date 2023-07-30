@@ -34,32 +34,33 @@ sample_filter_data_path = "sample_filter_data_path"
 class SampleFilter(nn.Module):
     def __init__(self):
         super().__init__()
-        layers =  [64,128,64,32,1]   #网络每一层的神经元个数，[1,10,1]说明只有一个隐含层，输入的变量是一个，也对应一个输出。如果是两个变量对应一个输出，那就是[2，10，1]
-        self.layer1 = nn.Linear(layers[0],layers[1])  #用torh.nn.Linear构建线性层，本质上相当于构建了一个维度为[layers[0],layers[1]]的矩阵，这里面所有的元素都是权重
-        self.layer2 = nn.Linear(layers[1],layers[2])
-        self.layer3 = nn.Linear(layers[2],layers[3])
+        layers = [64, 128, 64, 32, 1]  # 网络每一层的神经元个数，[1,10,1]说明只有一个隐含层，输入的变量是一个，也对应一个输出。如果是两个变量对应一个输出，那就是[2，10，1]
+        self.layer1 = nn.Linear(layers[0],
+                                layers[1])  # 用torh.nn.Linear构建线性层，本质上相当于构建了一个维度为[layers[0],layers[1]]的矩阵，这里面所有的元素都是权重
+        self.layer2 = nn.Linear(layers[1], layers[2])
+        self.layer3 = nn.Linear(layers[2], layers[3])
         self.layer4 = nn.Linear(layers[3], layers[4])
-        self.elu = nn.ELU()       #非线性的激活函数。如果只有线性层，那么相当于输出只是输入做了了线性变换的结果，对于线性回归没有问题。但是非线性回归我们需要加入激活函数使输出的结果具有非线性的特征
+        self.elu = nn.ELU()  # 非线性的激活函数。如果只有线性层，那么相当于输出只是输入做了了线性变换的结果，对于线性回归没有问题。但是非线性回归我们需要加入激活函数使输出的结果具有非线性的特征
 
-        #x = np.linspace(-np.pi, np.pi).astype(np.float32)
-        #y = np.sin(x)
+        x = np.linspace(-np.pi, np.pi).astype(np.float32)
+        y = np.sin(x)
         # 随机取25个点
-        #self.x_train = random.sample(x.tolist(), 25)  # x_train 就相当于网络的输入
-        #self.y_train = np.sin(self.x_train)  # y_train 就相当于输入对应的标签，每一个输入都会对应一个标签
+        self.x_train = random.sample(x.tolist(), 25)  # x_train 就相当于网络的输入
+        self.y_train = np.sin(self.x_train)  # y_train 就相当于输入对应的标签，每一个输入都会对应一个标签
         #plt.scatter(self.x_train, self.y_train, c="r")
         #plt.plot(x, y)
-        #plt.show()
+        # plt.show()
 
         self.device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 
         self.gline = 1
         self.file = 0
 
-    def getdata(self,line):
+    def getdata(self, line):
         if line != 0:
             self.gline = line
 
-        print("gline ", self.gline)
+        # print("gline ", self.gline)
 
         if self.gline == 1:
             with open(sample_filter_data_path, 'r') as file:
@@ -86,14 +87,12 @@ class SampleFilter(nn.Module):
         x_train = random.sample(x.tolist(), 25)
         self.y_train = np.sin(self.x_train)  # y_train 就相当于输入对应的标签，每一个输入都会对应一个标签
 
+        return state_array, int(label)
 
-        return state_array,int(label)
-
-
-    def forward(self,d):#d就是整个网络的输入
+    def forward(self, d):  # d就是整个网络的输入
         d1 = self.layer1(d)
-        d1 = self.elu(d1)#每一个线性层之后都需要加入一个激活函数使其非线性化。
-        d2 = self.layer2(d1)#但是在网络的最后一层可以不用激活函数，因为有些激活函数会使得输出结果限定在一定的值域里。
+        d1 = self.elu(d1)  # 每一个线性层之后都需要加入一个激活函数使其非线性化。
+        d2 = self.layer2(d1)  # 但是在网络的最后一层可以不用激活函数，因为有些激活函数会使得输出结果限定在一定的值域里。
         d2 = self.elu(d2)  # 每一个线性层之后都需要加入一个激活函数使其非线性化。
         d3 = self.layer3(d2)
         d3 = self.elu(d3)  # 每一个线性层之后都需要加入一个激活函数使其非线性化。
@@ -102,7 +101,7 @@ class SampleFilter(nn.Module):
 
     def trainnn(self):
         device = self.device  # 在跑深度学习的时候最好使用GPU，这样速度会很快。不要的话默认用cpu跑
-        epochs = 100  # 这是迭代次数，把所有的训练数据输入到网络里去就叫完成了一次epoch。
+        epochs = 10000  # 这是迭代次数，把所有的训练数据输入到网络里去就叫完成了一次epoch。
         learningrate = 1e-4  # 学习率，相当于优化算法里的步长，学习率越大，网络参数更新地更加激进。学习率越小，网络学习地更加稳定。
         net = SampleFilter().to(device=device)  # 网络的初始化
         optimizer = torch.optim.Adam(net.parameters(),
@@ -111,20 +110,19 @@ class SampleFilter(nn.Module):
         MinTrainLoss = 1e10
         train_loss = []  # 用一个空列表来存储训练时的损失，便于画图
 
-
         start = time.time()
         start0 = time.time()
         for epoch in range(1, epochs + 1):
 
             x_state, y_label = self.getdata(line=0)
 
-            print("x_state:", x_state)
-            print("y_label:", y_label)
+            # print("x_state:", x_state)
+            # print("y_label:", y_label)
 
-
-            pt_x_train = torch.from_numpy(np.array(x_state)).to(device=device, dtype=torch.float32).reshape(1,-1)  # 这里需要把我们的训练数据转换为pytorch tensor的类型，并且把它变成gpu能运算的形式。
-            pt_y_train = torch.from_numpy(np.array(y_label)).to(device=device, dtype=torch.float32).reshape(1,-1)  # reshap的目的是把维度变成(25,1),这样25相当于是batch，我们就可以一次性把所有的点都输入到网络里去，最后网络输出的结果也不是(1,1)而是(25,1)，我们就能直接计算所有点的损失
-
+            pt_x_train = torch.from_numpy(np.array(x_state)).to(device=device, dtype=torch.float32).reshape(1,
+                                                                                                            -1)  # 这里需要把我们的训练数据转换为pytorch tensor的类型，并且把它变成gpu能运算的形式。
+            pt_y_train = torch.from_numpy(np.array(y_label)).to(device=device, dtype=torch.float32).reshape(1,
+                                                                                                            -1)  # reshap的目的是把维度变成(25,1),这样25相当于是batch，我们就可以一次性把所有的点都输入到网络里去，最后网络输出的结果也不是(1,1)而是(25,1)，我们就能直接计算所有点的损失
 
             net.train()  # net.train()：在这个模式下，网络的参数会得到更新。对应的还有net.eval()，这就是在验证集上的时候，我们只评价模型，并不对网络参数进行更新。
             pt_y_pred = net(pt_x_train)  # 将tensor放入网络中得到预测值
@@ -147,15 +145,16 @@ class SampleFilter(nn.Module):
     def makedata(self):
         open(sample_filter_data_path, 'w')
         with open(sample_filter_data_path, 'a')as file:
-            for i in range(1000):
+            for i in range(100000):
                 state = [round(random.uniform(0, 1), 3) for _ in range(64)]
-                random_list = [0,1]
+                random_list = [0, 1]
                 random_element = random.choice(random_list)
-                content = str(state) + ','+str(random_element)
+                content = str(state) + ',' + str(random_element)
                 file.write(content)
                 content = '\n'
                 file.write(content)
-    def stringarr2floatarray(self,string_arr):
+
+    def stringarr2floatarray(self, string_arr):
         state_list = string_arr.split(',')
         state_arr = np.array(state_list)
 
@@ -165,23 +164,17 @@ class SampleFilter(nn.Module):
 
         return new_array
 
-    def filter(self,x_state):
+    def filter(self, x_state):
         pt_x_test = torch.from_numpy(np.array(x_state)).to(device=self.device, dtype=torch.float32).reshape(1, -1)
         DBnn = SampleFilter().to(self.device)
         DBnn.load_state_dict(torch.load("model.pth", map_location=self.device))  # pytorch 导入模型
         DBnn.eval()  # 这里指评价模型，不反传，所以用eval模式
         predict_y_test = DBnn(pt_x_test)
-        print("filter result:",predict_y_test)
 
         if predict_y_test > 0.5:
             return 1
         else:
             return 0
-
-
-
-
-
 
     def test(self):
 
@@ -193,11 +186,11 @@ class SampleFilter(nn.Module):
         # print("self.x_train:", self.x_train)
         # print("self.y_train:", self.y_train)
 
-        pt_x_test = torch.from_numpy(np.array(x_state)).to(device=self.device, dtype=torch.float32).reshape(1,-1)  # 这里需要把我们的训练数据转换为pytorch tensor的类型，并且把它变成gpu能运算的形式。
-        pt_y_test = torch.from_numpy(np.array(y_label)).to(device=self.device, dtype=torch.float32).reshape(1,-1)  # reshap的目的是把维度变成(25,1),这样25相当于是batch，我们就可以一次性把所有的点都输入到网络里去，最后网络输出的结果也不是(1,1)而是(25,1)，我们就能直接计算所有点的损失
+        pt_x_test = torch.from_numpy(np.array(x_state)).to(device=self.device, dtype=torch.float32).reshape(1,
+                                                                                                            -1)  # 这里需要把我们的训练数据转换为pytorch tensor的类型，并且把它变成gpu能运算的形式。
+        pt_y_test = torch.from_numpy(np.array(y_label)).to(device=self.device, dtype=torch.float32).reshape(1,
+                                                                                                            -1)  # reshap的目的是把维度变成(25,1),这样25相当于是batch，我们就可以一次性把所有的点都输入到网络里去，最后网络输出的结果也不是(1,1)而是(25,1)，我们就能直接计算所有点的损失
         print("pt_x_test:", pt_x_test)
-
-
 
         DBnn = SampleFilter().to(self.device)
         DBnn.load_state_dict(torch.load("model.pth", map_location=self.device))  # pytorch 导入模型
@@ -234,28 +227,26 @@ class DBTune():
 
 
     def Add_Small_Sample_Pool(self,state,reward):
-        print("Add_Small_Sample_Pool begin")
+        #print("Add_Small_Sample_Pool begin")
+        knob_data = self.ddpg.choose_action(state)
 
-
-
-        if self.state_old == []:
-            self.state_old = state_new
-            return
-
-
-        knob_data = self.ddpg.choose_action(state_new)
-        reward = reward
-
-        print("The Sample number is ",self.sample_num)
+        #print("The Sample number is ",self.sample_num)
         self.sample_num = self.sample_num + 1
 
         print("knob_data is", knob_data)
         print("reward is", reward)
-        print("state_new is", state_new)
-        print("state_old is", self.state_old)
+        #print("state_new is", state)
+        #print("state_old is", self.state_old)
 
-        self.ddpg.add_sample(self.state_old, knob_data, reward, state_new)
-        self.state_old = state_new
+        self.SendHTTP(type="POST", data=str(knob_data))
+
+        print("begin add sample.number= ",self.sample_num)
+
+        if len(self.state_old) == 0:
+            self.state_old = state
+            return
+        self.ddpg.add_sample(self.state_old, knob_data, reward, state)
+        self.state_old = state
 
 
     def get_reward(self,TPS):
@@ -264,56 +255,67 @@ class DBTune():
         reward = TPS
         return reward
 
-
-    def get_response(self):
-
+    def SendHTTP(self,type,data):
         url = 'http://127.0.0.1:8080/'
 
         headers = {
             'Authorization': 'cfe7mpr2fperuifn65g0',
             'Content-Type': 'application/json',
         }
-        payload = {}
-        payload["prompt"] = "prompt"
-        payload["model"] = "xl"
-        sendBody = json.dumps(payload)
+        if type == "GET":
+            payload = {}
+            sendBody = json.dumps(payload)
+            try:
+                response = requests.get(url, headers=headers, data=sendBody)
+            except requests.exceptions.ConnectionError:
+                print("request timeout.url=", url)
+                return False
+        else:
+            payload = {}
+            payload["data"] = data
+            sendBody = json.dumps(payload)
+            try:
+                response = requests.post(url, headers=headers, data=sendBody)
+            except requests.exceptions.ConnectionError:
+                print("request timeout.url=", url)
+                return False
 
-        try:
-            response = requests.get(url, headers=headers, data=sendBody)
-
-            text = ''
-
-
-            for i in response.content:
-                text = text + chr(i)
-
-            for i in text:
-                if i == '\r':
-                     text = text.replace(i, '')
-                if i == '\n':
-                    text = text.replace(i, '')
-
-            text = text.replace('\'', '"')
-            json_data = json.loads(text)
-
-            state = json_data['state']
-            state_new = self.stringarr2floatarray(state)
-            TPS = json_data["TPS"]
+        return response
 
 
-            reward = self.get_reward(TPS)
 
-            reward_f = float(reward)
 
-            sample_filter = SampleFilter()
-            result = sample_filter.filter(state_new)
-            print("filter result:", result)
-            if result == 1:
-                self.Add_Small_Sample_Pool(state_new,reward_f)
 
-        except requests.exceptions.ConnectionError:
-            print("request timeout.url=",url)
-            return False
+    def get_response(self):
+        response = self.SendHTTP(type = "GET",data = "")
+
+        text = ''
+        for i in response.content:
+            text = text + chr(i)
+
+        for i in text:
+            if i == '\r':
+                text = text.replace(i, '')
+            if i == '\n':
+                text = text.replace(i, '')
+
+        text = text.replace('\'', '"')
+        json_data = json.loads(text)
+        state = json_data['state']
+        state_new = self.stringarr2floatarray(state)
+        TPS = json_data["TPS"]
+        if TPS == '':
+            print("TPS is null!!!!!!")
+            exit(0)
+
+        reward = self.get_reward(TPS)
+        reward_f = float(reward)
+        sample_filter = SampleFilter()
+        result = sample_filter.filter(state_new)
+        print("filter result:", result)
+        if result == 0:
+            self.Add_Small_Sample_Pool(state_new,reward_f)
+
 
     def aaa(self):
         jsonString = '{"state": "0.14739051889312016, 0.177431486232265", "TPS": 12149}'
@@ -341,12 +343,16 @@ class DBTune():
 
 
 
-
+#samplefileter = SampleFilter()
+#samplefileter.makedata()
+#samplefileter.getdata()
+#samplefileter.trainnn()
+#samplefileter.test()
 
 
 
 client = DBTune()
-for i in range(100):
+for i in range(2):
     client.get_response()
 
 

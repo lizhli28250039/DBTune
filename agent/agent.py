@@ -7,7 +7,11 @@ import json
 import logging
 import socket
 import threading
+import email
+import pprint
+from io import StringIO
 
+import os
 
 PORT = 8080
 metricFile='metric.txt'
@@ -16,26 +20,6 @@ TPSFile='tps.txt'
 gline = 0
 
 state_TPS_json= {'state':[],'TPS':0}
-
-def make_state_and_TPS_data():
-    #state = np.random.randrange(1,100,2)
-    open(metricFile, 'w')
-    with open(metricFile, 'a')as file:
-        for i in range(1000):
-            state = [round(random.uniform(0, 1), 3)for _ in range(64)]
-            content = str(state)
-            file.write(content)
-            content = '\n'
-            file.write(content)
-
-    open(TPSFile, 'w')
-    with open(TPSFile, 'a')as file:
-        for i in range(1000):
-            TPS = [random.randint(6000,13000) for _ in range(1)]
-            content = str(TPS)
-            file.write(content)
-            content = '\n'
-            file.write(content)
 
 def get_state_and_TPS_data():
     global gline
@@ -84,40 +68,78 @@ def pack_metric_tps_response():
     return state_TPS_json
 
 
+def parse_request(request):
+    requeststr = str(request)
+    raw_list = requeststr.split("\\r\\n")
+    request = {}
+    for index in range(1, len(raw_list)):
+        item = raw_list[index].split(":")
+        if len(item) == 2:
+            request.update({item[0].lstrip(' '): item[1].lstrip(' ')})
+    return request
+
 def handle(client, addr):
     print("from ", addr)
     data = client.recv(1024)
 
+    logging.debug("handle begin")
+
     # 请求报文
     for k, v in enumerate(data.decode().split("\r\n")):
         print(k, v)
+        logging.debug("request:",k,v)
 
-    state_TPS_json = pack_metric_tps_response()
-    logging.debug("state_TPS_json  " + str(state_TPS_json))
+    request = parse_request(data)
+    print(request)
+    print('\n')
+    print(request.keys())
 
-    bodyText = str(state_TPS_json)
-    # 响应报文
-    # 响应行
-    client.send(b"HTTP/1.1 200 OK\r\n")
-    # 首部行
-    client.send(b"Server: pdudo_web_sites\r\n")
-    client.send(b"Content-Type: text/html\r\n")
-    client.send(("Content-Length: %s\r\n" % (len(bodyText) + 2)).encode())
-    client.send(b"\r\n")
-    client.send(("%s\r\n" % (bodyText)).encode())
+    # pretty-print the dictionary of headers
+    logging.debug("request:",request)
+    logging.debug("request keys:", request.keys())
+    #logging.debug("request type:", request["{\"type\""])
+
+    if "GET" in str(data):
+        state_TPS_json = pack_metric_tps_response()
+        logging.debug("state_TPS_json  " + str(state_TPS_json))
+        bodyText = str(state_TPS_json)
+        # 响应报文
+        # 响应行
+        client.send(b"HTTP/1.1 200 OK\r\n")
+        # 首部行
+        client.send(b"Server: pdudo_web_sites\r\n")
+        client.send(b"Content-Type: text/html\r\n")
+        client.send(("Content-Length: %s\r\n" % (len(bodyText) + 2)).encode())
+        client.send(b"\r\n")
+        client.send(("%s\r\n" % (bodyText)).encode())
+    else:
+        print("post request!!!!!")
+        bodyText = ""
+        # 响应报文
+        # 响应行
+        client.send(b"HTTP/1.1 200 OK\r\n")
+        # 首部行
+        client.send(b"Server: pdudo_web_sites\r\n")
+        client.send(b"Content-Type: text/html\r\n")
+        client.send(("Content-Length: %s\r\n" % (len(bodyText) + 2)).encode())
+        client.send(b"\r\n")
+        client.send(("%s\r\n" % (bodyText)).encode())
 
 
 def main():
+
+    if not os.path.exists("Logs"):
+        os.makedirs("Logs")
+    logger = logging.getLogger(__name__)
+    logging.basicConfig(level=logging.DEBUG, format='%(asctime)s %(levelname)-8s %(message)s',
+                        datefmt='%a, %d %b %Y %H:%M:%S', filename='Logs/dbtune-debug.log', filemode='w')
+
     try:
         s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         s.bind(("127.0.0.1",8080))
         s.listen()
         print("Serving at port 8080")
         logging.debug("Serving at port 8080")
-
-        make_state_and_TPS_data()
-
-
         while True:
             client, addr = s.accept()
             t = threading.Thread(target=handle, args=(client, addr))
