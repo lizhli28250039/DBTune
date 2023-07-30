@@ -212,7 +212,11 @@ class DBTune():
         self.ddpg = DDPG(n_actions=12, n_states=64, gamma=0, alr=0.02)
         self.state_old = []
         self.sample_num = 1
-        self.tps_old = 10000
+        self.tps_init = 10000
+        self.tps_max = 10001
+        self.tps_min = 9999
+
+
 
 
     def stringarr2floatarray(self,string_arr):
@@ -249,11 +253,29 @@ class DBTune():
         self.state_old = state
 
 
-    def get_reward(self,TPS):
-        print("get_stata_reward begin",TPS)
+    def get_reward(self,tps_cur):
+        #more is better
+        #print("get_stata_reward begin",tps_cur)
+        if tps_cur > self.tps_max:
+            self.tps_max = tps_cur
+        if tps_cur < self.tps_min:
+            self.tps_min = tps_cur
 
-        reward = TPS
+        tps_base = (self.tps_max - self.tps_min)*0.5 + self.tps_min
+        deta_t0 = (tps_cur - self.tps_init)/self.tps_init
+        deta_base = (tps_cur - tps_base)/tps_base
+        reward = 1.0
+        if deta_t0 >0:
+            reward = ((1 + deta_t0)*(1 + deta_t0) -1)*abs(1 + deta_base)
+        if deta_t0 < 0:
+            reward = 200.0 * deta_base
+        else:
+            reward = -((1 - deta_t0)*(1-deta_t0) - 1)*abs(1 - deta_base)
+
+        self.tps_init = tps_cur
+
         return reward
+
 
     def SendHTTP(self,type,data):
         url = 'http://127.0.0.1:8080/'
@@ -308,7 +330,7 @@ class DBTune():
             print("TPS is null!!!!!!")
             exit(0)
 
-        reward = self.get_reward(TPS)
+        reward = self.get_reward(tps_cur = float(TPS))
         reward_f = float(reward)
         sample_filter = SampleFilter()
         result = sample_filter.filter(state_new)
@@ -350,9 +372,22 @@ class DBTune():
 #samplefileter.test()
 
 
+def test_reward():
+    for i in range(10):
+        TPS = 10000
+        temp = np.random.randint(0, 3000)
+        if (temp < 1500):
+            TPS = TPS - temp
+        else:
+            TPS = TPS + temp - 1500
+
+        print("TPS is :", TPS)
+        reward = client.get_reward(tps_cur=TPS)
+        print("reward is :", reward)
+
 
 client = DBTune()
-for i in range(2):
+for i in range(4):
     client.get_response()
 
 
