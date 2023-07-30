@@ -1,7 +1,8 @@
 # DBTune
 
 **1. Architecture and process details**
-   The architecture of this program is shown in the following figure:
+
+The architecture of this program is shown in the following figure:
 
 ![image](https://github.com/lizhli28250039/DBTune/assets/140188927/08fe1d4a-5c03-4084-b531-d59b5b76a9d8)
 
@@ -32,5 +33,6 @@ tensor([[0.4870, 0.9650, 0.0650, 0.5410, 0.4660, 0.6010, 0.0890, 0.5790, 0.2700,
          0.6560]])
 Output of sample filter:
 tensor[[0.0318]]
+
 
 [Note]: For the convenience of program debugging, the Agent in this code does not use real environment data to obtain the status data and TPS data of the database.We will place the status data and TPS data in metric.txt and TPS.txt.Actual readers should build a real database environment.Both the status data and TPS data are obtained under actual workloads, and the actual database status data and TPS data are obtained.For specific data formats, please refer to the data formats in metric. txt and TPS. txt in this code.
