@@ -12,19 +12,7 @@ b"{'state': '0.648, 0.514, 0.787, 0.566, 0.591, 0.363, 0.329, 0.024, 0.408, 0.00
 DBTune返回给Agent的Knobs数据格式为：'[ 0.530  0.406  0.620  0.481  0.421  0.595  0.598  0.415  0.484  0.253  0.595  0.606]'12个数据分别代表12个数据库参数（不同数据库参数不一样）：
 
 
-序号	参数名称	默认值	最小值	最大值
-1	effective_cache_size	4GB	4GB	16GB
-2	shared_buffers	128MB	128MB	12GB
-3	max_parallel_workers_per_gather	0	0	8
-4	default_statistics_target	100	100	2048
-5	bgwriter_lru_maxpages	10	0	1000
-6	random_page_cost	4	1	10
-7	checkpoint_timeout	5min	10ms	30min
-8	max_wal_size	1GB	256MB	16GB
-9	temp_bufers	8MB	8MB	1GB
-10	work_mem	4MB	4MB	1GB
-11	min_wal_size	80MB	80MB	1GB
-12	Max_connections	10	10	100
+![image](https://github.com/lizhli28250039/DBTune/assets/140188927/254b6f3a-1fb4-43ae-98e4-053278ea4994)
 
 
 样本过滤器的输入：
