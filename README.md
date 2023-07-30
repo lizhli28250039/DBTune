@@ -41,6 +41,7 @@ For the convenience of debugging, this article sets up a loop to obtain database
 for i in range(4):
             client.get_response()
 The actual production environment can set a timer to obtain the database status.You can also call the interface to obtain the database status when the user has timed out accessing the database or when an abnormal condition occurs.
+
 **2.Installation and deployment**
 
 1) Preparation environment
