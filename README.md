@@ -35,4 +35,17 @@ Output of sample filter:
 tensor[[0.0318]]
 
 
-[Note]: For the convenience of program debugging, the Agent in this code does not use real environment data to obtain the status data and TPS data of the database.We will place the status data and TPS data in metric.txt and TPS.txt.Actual readers should build a real database environment.Both the status data and TPS data are obtained under actual workloads, and the actual database status data and TPS data are obtained.For specific data formats, please refer to the data formats in metric. txt and TPS. txt in this code.
+[Note]: 1. For the convenience of program debugging, the Agent in this code does not use real environment data to obtain the status data and TPS data of the database.We will place the status data and TPS data in metric.txt and TPS.txt.Actual readers should build a real database environment.Both the status data and TPS data are obtained under actual workloads, and the actual database status data and TPS data are obtained.For specific data formats, please refer to the data formats in metric. txt and TPS. txt in this code.
+For the convenience of debugging, this article sets up a loop to obtain database status and TPS data. The code is as follows:
+        client = DBTune()
+for i in range(4):
+            client.get_response()
+The actual production environment can set a timer to obtain the database status.You can also call the interface to obtain the database status when the user has timed out accessing the database or when an abnormal condition occurs.
+**2.Installation and deployment**
+
+1) Preparation environment
+2) Starting the Agent
+Python Agent.py
+
+3)Start test_ Ddpg.py
+     Python test_ Ddpg.py
