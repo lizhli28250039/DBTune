@@ -1,23 +1,27 @@
 # DBTune
-本程序的架构如下图所示：
+
+**1. Architecture and process details**
+   The architecture of this program is shown in the following figure:
 
 ![image](https://github.com/lizhli28250039/DBTune/assets/140188927/08fe1d4a-5c03-4084-b531-d59b5b76a9d8)
 
+As shown in the above figure：The agent obtains the status of the database (including client load information, hardware environment information, and internal database status information) from the database.The agent transfers status data to DBTune.The status data is first determined through a sample filter to determine whether it is suitable for the recommended configuration.If it is not suitable for providing recommended configurations, simply return.If it is suitable for providing recommended configurations, package the data into samples and store them in the sample pool, and output the data to the database configuration Knobs through the Actor network.
 
-Agent从数据库获取数据库的状态（包括客户端负载信息、硬件环境信息、数据库内部状态信息），将状态数据传送给test_ddpg，首先通过样本过滤器判断该数据是否适合推荐配置，如果不适合，直接返回，如果适合则将数据打包成样本存放入样本池，并且将数据通过Actor网络输出数据库配置Knobs。
 
-Agent与DBTune之间通信通过HTTP协议，DBTune为HTTP服务端，Agent为HTTP客户端，Agent发送给DBTune的数据格式为：
+
+The communication between the Agent and DBTune is through the HTTP protocol.DBTune is an HTTP server.The agent is an HTTP client.The data format sent by the agent to DBTune is:
 b"{'state': '0.648, 0.514, 0.787, 0.566, 0.591, 0.363, 0.329, 0.024, 0.408, 0.005, 0.224, 0.421, 0.467, 0.91, 0.681, 0.476, 0.083, 0.999, 0.991, 0.216, 0.662, 0.934, 0.095, 0.25, 0.768, 0.309, 0.747, 0.326, 0.519, 0.354, 0.482, 0.2, 0.657, 0.903, 0.481, 0.955, 0.699, 0.053, 0.534, 0.907, 0.993, 0.297, 0.556, 0.835, 0.487, 0.548, 0.782, 0.195, 0.216, 0.306, 0.701, 0.574, 0.785, 0.164, 0.885, 0.347, 0.682, 0.975, 0.661, 0.821, 0.902, 0.789, 0.444, 0.073', 'TPS': '8608'}\r\n"
 
-DBTune返回给Agent的Knobs数据格式为：'[ 0.530  0.406  0.620  0.481  0.421  0.595  0.598  0.415  0.484  0.253  0.595  0.606]'12个数据分别代表12个数据库参数（不同数据库参数不一样）：
+The Knobs data format returned by DBTune to the Agent is:'[ 0.530  0.406  0.620  0.481  0.421  0.595  0.598  0.415  0.484  0.253  0.595  0.606]'12 data represent 12 database parameters (different database parameters are different)：
 
 
-![image](https://github.com/lizhli28250039/DBTune/assets/140188927/51fafaf5-0930-4fb4-9071-146c5d518226)
+![image](https://github.com/lizhli28250039/DBTune/assets/140188927/53b8e1b5-3182-4c80-b249-86d433d2eeb8)
 
-比如DBTune返回的第一个knobs数据为0.530，我们称之为推荐配置系数。数据库的配置为：默认配置+（最大配置 - 最小配置）*推荐配置系数。
-本例子中，数据库effective_cache_size的推荐配置为：4+（16-4）*0.530 = 10.36GB
+For example, the data returned by DBTune is called the recommended configuration coefficient.The formula for calculating the true configuration value of the database is:
+Default configuration+(maximum configuration - minimum configuration) * recommended configuration factor.
+Assuming the first parameter returned by DBTune is 0.530, the recommended configuration for database **effective_cache_size** is: 4+(16-4) * 0.530=10.36G
 
-样本过滤器的输入：
+Input of sample filter:
 tensor([[0.4870, 0.9650, 0.0650, 0.5410, 0.4660, 0.6010, 0.0890, 0.5790, 0.2700,
          0.5560, 0.6450, 0.4810, 0.3550, 0.2490, 0.9340, 0.4530, 0.5300, 0.0190,
          0.5080, 0.0060, 0.1440, 0.4730, 0.3770, 0.0540, 0.5880, 0.1640, 0.5570,
@@ -26,7 +30,7 @@ tensor([[0.4870, 0.9650, 0.0650, 0.5410, 0.4660, 0.6010, 0.0890, 0.5790, 0.2700,
          0.8160, 0.4760, 0.7830, 0.4710, 0.8170, 0.8820, 0.4400, 0.7810, 0.8150,
          0.2960, 0.1240, 0.1860, 0.4360, 0.1190, 0.5300, 0.8290, 0.4850, 0.8180,
          0.6560]])
-样本过滤器的输出：
+Output of sample filter:
 tensor[[0.0318]]
 
-【注意】：本代码Agent中获取数据库的状态数据和TPS数据用的是已经构造好的metric.txt和TPS.txt中的数据，实际读者应该搭建真实的数据库环境，状态数据和TPS的数据均在实际的工作负载下，获取真实的数据库的状态数据和TPS数据，具体的数据格式可以参考下本代码中metric.txt和TPS.txt中的数据格式。
+[Note]: For the convenience of program debugging, the Agent in this code does not use real environment data to obtain the status data and TPS data of the database.We will place the status data and TPS data in metric.txt and TPS.txt.Actual readers should build a real database environment.Both the status data and TPS data are obtained under actual workloads, and the actual database status data and TPS data are obtained.For specific data formats, please refer to the data formats in metric. txt and TPS. txt in this code.
